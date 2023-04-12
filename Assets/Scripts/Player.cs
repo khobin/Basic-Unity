@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -7,7 +7,9 @@ public class Player : MonoBehaviour
     Animator animator;
     Rigidbody2D rigid;
     SpriteRenderer spriteRenderer;
+    Collider2D coll;
 
+    public GameManager gameManager;
     public float maxSpeed;
     public float jumpPower;
     public int dirc;
@@ -17,6 +19,7 @@ public class Player : MonoBehaviour
         rigid = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
+        coll = GetComponent<Collider2D>();
     }
 
     private void Update()
@@ -94,7 +97,7 @@ public class Player : MonoBehaviour
     void OnAttack(Transform enemy)
     {
         //Point
-
+        gameManager.stagePoint += 100;
         //Reaction
         rigid.AddForce(Vector2.up * 5, ForceMode2D.Impulse);
 
@@ -105,6 +108,8 @@ public class Player : MonoBehaviour
     }
     void OnDamaged(Vector2 targetPos)
     {
+        //hp--
+        gameManager.HealthDown(); 
         // Change Layer (9 == PlayerDamaged)
         gameObject.layer = 9;
 
@@ -129,14 +134,44 @@ public class Player : MonoBehaviour
         spriteRenderer.color = new Color(1, 1, 1, 1);
     }
 
+    public void OnDie()
+    {
+        //Sprite Alpha
+        spriteRenderer.color = new Color(1, 1, 1, 0.4f);
+        //Sprite FlipY
+        spriteRenderer.flipY = true;
+        //Collider Disable
+        coll.enabled = false;
+        //Die Effect Jump
+        rigid.AddForce(Vector2.up * 5, ForceMode2D.Impulse);
+    }
+
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if(collision.gameObject.tag == "Item")
         {
             //Point
-
+            bool isBronze = collision.gameObject.name.Contains("Bronze");
+            bool isSilver = collision.gameObject.name.Contains("Silver");
+            bool isGold = collision.gameObject.name.Contains("Gold");
+            if(isBronze)
+                gameManager.stagePoint += 50;
+            else if (isSilver)
+                gameManager.stagePoint += 100;
+            else if (isGold)
+                gameManager.stagePoint += 200;
             //DeActive
             collision.gameObject.SetActive(false);
         }
+        else if(collision.gameObject.tag == "Finish")
+        {
+            //Next Stage
+            gameManager.NextStage();
+        }
     }
+    public void VelocityZero()
+    {
+        rigid.velocity = Vector2.zero;
+    }
+
 }
